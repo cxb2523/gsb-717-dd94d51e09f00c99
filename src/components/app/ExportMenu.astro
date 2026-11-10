@@ -1,0 +1,55 @@
+---
+import Icon from '../ui/Icon.astro';
+interface Props {
+  suffix?: string;
+}
+
+const { suffix = '' } = Astro.props as Props;
+const menuName = `export${suffix}`;
+---
+
+<div>
+  <button
+    type="button"
+    class="hb w-full justify-start!"
+    data-menu={menuName}
+    aria-haspopup="true"
+    aria-expanded="false"
+    title="Copy and export"
+  >
+    <Icon name="lucide:download" />
+    <span class="lg:inline">Export</span>
+    <span data-export-chevron class="inline-flex opacity-60">
+      <Icon name="lucide:chevron-down" size={12} />
+    </span>
+    <span data-export-spinner class="msel-spin" hidden>
+      <Icon name="lucide:loader-circle" size={14} />
+    </span>
+  </button>
+  <div class="pop" data-pop={menuName} hidden>
+    <button type="button" class="mi" data-command="copy">
+      <Icon name="lucide:copy" />
+      Copy Markdown
+    </button>
+    <button type="button" class="mi" data-command="download">
+      <Icon name="lucide:file-text" />
+      Download .md
+    </button>
+    <div class="pop-sep"></div>
+    <button type="button" class="mi" data-command="export-html">
+      <Icon name="lucide:file-code" />
+      Export to HTML
+    </button>
+    <button type="button" class="mi" data-command="export-pdf">
+      <Icon name="lucide:file-down" />
+      Export to PDF
+    </button>
+    <div class="pop-sep"></div>
+    <button type="button" class="mi" data-command="export-docx">
+      <Icon name="lucide:file-text" />
+      <span>
+        Export to DOCX <span class="opacity-50 text-[11px]">beta</span>
+      </span>
+    </button>
+  </div>
+</div>

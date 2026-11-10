@@ -1,0 +1,146 @@
+---
+import AccountMenu from '@/components/auth/AccountMenu.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Layout from '@/layouts/Layout.astro';
+import { canEdit } from '@/lib/documents/sharing';
+import { isShareToken } from '@/lib/documents/ids';
+import { claimShareLink, resolveShareToken } from '@/lib/documents/repository';
+
+export const prerender = false;
+
+const token = Astro.params.token ?? '';
+const { user, supabase } = Astro.locals;
+
+const readable = Boolean(supabase) && isShareToken(token);
+
+let document = readable && supabase ? await resolveShareToken(supabase, token) : null;
+let signedIn = Boolean(user);
+
+if (supabase && user && document) {
+  const claimed = await claimShareLink(supabase, token);
+  if (!claimed) document = null;
+  else if (canEdit(claimed.role)) {
+    return Astro.redirect(`/?doc=${encodeURIComponent(claimed.documentId)}`, 303);
+  } else {
+    signedIn = true;
+  }
+}
+
+if (!document) Astro.response.status = 404;
+
+const serialized = document
+  ? JSON.stringify({ title: document.title, content: document.content }).replace(/</g, '\\u003c')
+  : '';
+---
+
+<Layout
+  title={document ? `${document.title} · Mdverse` : 'Link not found · Mdverse'}
+  robots="noindex, nofollow"
+  bodyClass="min-h-screen bg-black text-neutral-200 font-sans"
+>
+  {!document ? (
+    <main class="mx-auto flex min-h-screen w-full max-w-lg flex-col items-center justify-center px-6 text-center">
+      <Icon name="lucide:link-2-off" size={22} class="text-neutral-600" />
+      <h1 class="mt-4 text-lg font-semibold text-neutral-100">This link does not work</h1>
+      <p class="mt-2 text-xs leading-relaxed text-neutral-500">
+        It may have expired, or the owner revoked it. Ask for a new one - sharing again takes a
+        moment.
+      </p>
+      <a href="/" class="hb mt-6">
+        <Icon name="lucide:arrow-left" />
+        Open the editor
+      </a>
+    </main>
+  ) : (
+    <>
+      <div class="min-h-screen flex flex-col">
+        <header class="sticky top-0 z-10 border-b border-neutral-800 bg-black/90 backdrop-blur">
+          <div class="relative mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
+            <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+              <img
+                src="/images/bg-header.avif"
+                alt=""
+                class="w-full h-full object-cover opacity-40"
+              />
+            </div>
+            <div class="relative flex min-w-0 items-center gap-2.5">
+              <a href="/" class="flex shrink-0 items-center" aria-label="Mdverse home">
+                <img
+                  src="/svg/logo-calligraphy.svg"
+                  alt="Mdverse logo"
+                  class="h-6 w-auto"
+                  width="116"
+                  height="28"
+                />
+              </a>
+              <span class="sep hidden sm:inline-block"></span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium text-neutral-100">{document.title}</p>
+                <p class="mt-0.5 text-[11px] text-neutral-500">
+                  Shared link · revision {document.revision} ·{' '}
+                  {signedIn ? 'you have access' : 'read-only'}
+                </p>
+              </div>
+            </div>
+            <div class="relative flex shrink-0 items-center gap-1.5">
+              {signedIn ? (
+                <AccountMenu />
+              ) : (
+                <a href={`/login?next=${encodeURIComponent(`/s/${token}`)}`} class="hb on shrink-0">
+                  <Icon name="lucide:log-in" />
+                  Sign in
+                </a>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main class="mx-auto w-full max-w-3xl flex-1 px-4 pb-16">
+          {!signedIn && (
+            <p class="mt-4 rounded-lg border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-[11px] leading-relaxed text-neutral-400">
+              You are reading this through a link. Sign in and the access stays in your account
+              instead of living in this address - that is also what lets the owner see who edited
+              what.
+            </p>
+          )}
+          <article id="share-body" class="prose prose-invert mx-auto max-w-3xl py-10">
+            <p class="text-sm text-neutral-500 not-prose">Rendering…</p>
+          </article>
+        </main>
+
+        <footer class="border-t border-neutral-800 px-4 py-4 text-center text-[11px] text-neutral-600">
+          Rendered by Mdverse from the owner’s text. Nothing on this page is editable.
+        </footer>
+      </div>
+
+      <script type="application/json" id="share-document" set:html={serialized}></script>
+    </>
+  )}
+</Layout>
+
+<script>
+  import { HIGHLIGHT_THEME_CSS } from '@/lib/markdown/highlightTheme';
+  import { renderDiagram } from '@/lib/markdown/mermaid';
+  import { renderMarkdown } from '@/lib/markdown/render';
+
+  const data = document.getElementById('share-document');
+  const target = document.getElementById('share-body');
+
+  if (data && target) {
+    document.head.insertAdjacentHTML('beforeend', `<style>${HIGHLIGHT_THEME_CSS}</style>`);
+
+    let content = '';
+    try {
+      const parsed: unknown = JSON.parse(data.textContent ?? '{}');
+      if (typeof parsed === 'object' && parsed !== null) {
+        const value = (parsed as { content?: unknown }).content;
+        if (typeof value === 'string') content = value;
+      }
+    } catch {
+      // Malformed payload renders the empty state instead of breaking the page.
+    }
+
+    // Same render pipeline as the editor preview.
+    void renderMarkdown(target, content, { renderDiagram });
+  }
+</script>

@@ -1,0 +1,347 @@
+---
+import CollaborateDialog from '@/components/app/CollaborateDialog.astro';
+import Icon from '@/components/ui/Icon.astro';
+import AccountLayout from '@/layouts/AccountLayout.astro';
+import { toAccountSummary } from '@/lib/auth/account';
+import { describeAccess } from '@/lib/documents/access';
+import { describeSize, firstLine, formatTimestamp } from '@/lib/documents/format';
+import { documentNotice } from '@/lib/documents/messages';
+import { listCollections, listDocuments, MAX_LISTED_DOCUMENTS } from '@/lib/documents/repository';
+import type { CloudDocument } from '@/lib/documents/types';
+
+export const prerender = false;
+
+const { user, supabase } = Astro.locals;
+const account = toAccountSummary(user, Astro.locals.profile);
+if (!account || !user || !supabase) return Astro.redirect('/login?next=/dashboard');
+
+const [documents, collections] = await Promise.all([
+  listDocuments(supabase, user.id),
+  listCollections(supabase, user.id),
+]);
+const params = Astro.url.searchParams;
+const notice = documentNotice({
+  error: params.get('error'),
+  created: params.get('created'),
+  renamed: params.get('renamed'),
+  deleted: params.get('deleted'),
+  imported: params.get('imported'),
+});
+
+const owned = documents.filter((document) => document.role === 'owner');
+const shared = documents.filter((document) => document.role !== 'owner');
+
+// Grouped the way the editor's collection tabs are. A document whose collection
+// is gone falls back to the default one, exactly like the editor does.
+const defaultCollectionId =
+  collections.find((entry) => entry.isDefault)?.id ?? collections[0]?.id ?? '';
+const collectionOf = (document: CloudDocument): string =>
+  document.collectionId && collections.some((entry) => entry.id === document.collectionId)
+    ? document.collectionId
+    : defaultCollectionId;
+
+// Collection 1 (the default one) leads the list, then the ones the user added.
+const sections = [...collections]
+  .sort((a, b) => Number(b.isDefault) - Number(a.isDefault))
+  .map((collection) => ({
+    id: collection.id,
+    name: collection.name,
+    documents: owned.filter((document) => collectionOf(document) === collection.id),
+  }))
+  .filter((section) => section.documents.length > 0);
+
+// Creation offers every collection, Collection 1 included.
+const createTargets = collections;
+
+const editorUrl = (id: string): string => `/?doc=${encodeURIComponent(id)}`;
+---
+
+<AccountLayout
+  title="Your documents"
+  description="Every tab you keep in the editor is stored in Postgres, owned by your account and protected by row level security."
+  current="dashboard"
+>
+  {notice && (
+    <p
+      class:list={[
+        'mb-6 rounded-lg border px-3 py-2 text-xs',
+        notice.tone === 'error'
+          ? 'border-red-900 bg-red-950/40 text-red-300'
+          : 'border-emerald-900 bg-emerald-950/30 text-emerald-300',
+      ]}
+    >
+      {notice.message}
+    </p>
+  )}
+
+  <section class="rounded-xl border border-neutral-800 bg-neutral-950/60 p-4">
+    <form method="POST" action="/documents" class="flex flex-wrap items-center gap-2">
+      <input
+        type="text"
+        name="title"
+        maxlength="120"
+        placeholder="My new document"
+        aria-label="Title of the new document"
+        class="min-w-0 flex-1 rounded-lg border border-neutral-800 bg-black px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-600 focus:outline-none"
+      />
+      <label class="sr-only" for="new-document-collection">
+        Collection
+      </label>
+      <select
+        id="new-document-collection"
+        name="collectionId"
+        class="rounded-lg border border-neutral-800 bg-black px-2 py-2 text-xs text-neutral-200 focus:border-neutral-600 focus:outline-none"
+      >
+        {createTargets.map((collection) => (
+          <option value={collection.id}>{collection.name}</option>
+        ))}
+      </select>
+      <button type="submit" class="hb hf on">
+        <Icon name="lucide:file-plus" />
+        New document
+      </button>
+    </form>
+
+    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-neutral-900 pt-3">
+      <button type="button" class="hb" id="import-local-drafts" hidden>
+        <Icon name="lucide:upload" />
+        <span id="import-local-drafts-label">Import browser drafts</span>
+      </button>
+      <p class="text-[11px] leading-relaxed text-neutral-500">
+        Drafts you wrote in this browser before signing in stay here until you import them.
+      </p>
+    </div>
+  </section>
+
+  {documents.length === 0 ? (
+    <section class="mt-6 rounded-xl border border-dashed border-neutral-800 p-6 text-center">
+      <Icon name="lucide:file-text" size={20} class="mx-auto text-neutral-600" />
+      <h2 class="mt-3 text-sm font-medium text-neutral-200">No documents yet</h2>
+      <p class="mx-auto mt-1 max-w-md text-xs leading-relaxed text-neutral-500">
+        Create one above, or open the editor: it starts with a welcome document you can edit right
+        away.
+      </p>
+      <a href="/" class="mt-4 inline-flex text-xs text-sky-300 hover:text-sky-200">
+        Open the editor →
+      </a>
+    </section>
+  ) : (
+    <>
+      <section class="mt-6">
+        <h2 class="flex items-center gap-2 text-xs font-medium text-neutral-400">
+          <Icon name="lucide:file-text" size={14} />
+          Yours
+          <span class="text-neutral-600">({owned.length})</span>
+        </h2>
+
+        {owned.length === 0 ? (
+          <p class="mt-3 text-xs text-neutral-500">Nothing of your own yet.</p>
+        ) : (
+          sections.map((section) => (
+            <div class="mt-4">
+              <h3 class="flex items-center gap-2 text-[11px] font-medium text-neutral-400">
+                <Icon name="lucide:list-tree" size={12} />
+                {section.name}
+                <span class="text-neutral-600">({section.documents.length})</span>
+              </h3>
+              <ul class="mt-2 space-y-2">
+                {section.documents.map((document) => (
+                  <li class="rounded-xl border border-neutral-800 bg-neutral-950/60 p-3">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <a
+                          href={editorUrl(document.id)}
+                          class="text-sm font-medium text-neutral-50 hover:text-white hover:underline"
+                        >
+                          {document.title}
+                        </a>
+                        <p class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-neutral-500">
+                          <span class="inline-flex items-center gap-1">
+                            <Icon name="lucide:clock" size={11} />
+                            {formatTimestamp(document.updatedAt)}
+                          </span>
+                          <span>·</span>
+                          <span>revision {document.revision}</span>
+                          <span>·</span>
+                          <span>{describeSize(document.content)}</span>
+                        </p>
+                        {firstLine(document.content) && (
+                          <p class="mt-1 truncate text-xs text-neutral-400">
+                            {firstLine(document.content)}
+                          </p>
+                        )}
+                      </div>
+
+                      <div class="flex shrink-0 items-center gap-1">
+                        <a href={editorUrl(document.id)} class="hb">
+                          <Icon name="lucide:terminal" />
+                          Edit
+                        </a>
+                        <a
+                          href={`/documents/${encodeURIComponent(document.id)}/history`}
+                          class="hb"
+                          title="Version history"
+                        >
+                          <Icon name="lucide:history" />
+                          History
+                        </a>
+                        <button
+                          type="button"
+                          class="hb"
+                          title="Who can reach this document"
+                          aria-haspopup="dialog"
+                          data-collab-open
+                          data-doc-id={document.id}
+                          data-doc-title={document.title}
+                        >
+                          <Icon name="lucide:user-plus" />
+                          Share
+                        </button>
+                        <form
+                          method="POST"
+                          action={`/documents/${encodeURIComponent(document.id)}/delete`}
+                          data-confirm={`Delete “${document.title}”? The document and its version history are gone for everyone you shared it with.`}
+                          data-confirm-title="Delete this document?"
+                          data-confirm-label="Delete"
+                          data-confirm-danger
+                        >
+                          <button
+                            type="submit"
+                            class="hb danger"
+                            title="Delete this document"
+                            aria-label={`Delete ${document.title}`}
+                          >
+                            <Icon name="lucide:trash" />
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    <details class="mt-2">
+                      <summary class="cursor-pointer text-[11px] text-neutral-500 hover:text-neutral-300">
+                        Rename
+                      </summary>
+                      <form
+                        method="POST"
+                        action={`/documents/${encodeURIComponent(document.id)}/rename`}
+                        class="mt-2 flex flex-wrap items-center gap-2"
+                      >
+                        <input type="hidden" name="revision" value={String(document.revision)} />
+                        <input
+                          type="text"
+                          name="title"
+                          value={document.title}
+                          maxlength="120"
+                          aria-label="New title"
+                          class="min-w-0 flex-1 rounded-lg border border-neutral-800 bg-black px-3 py-1.5 text-xs text-neutral-100 focus:border-neutral-600 focus:outline-none"
+                        />
+                        <button type="submit" class="hb">
+                          Save name
+                        </button>
+                      </form>
+                      <p class="mt-1 text-[10px] text-neutral-600">
+                        Renaming never changes the address ({document.slug}), so links you already
+                        shared keep working.
+                      </p>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
+      </section>
+
+      {shared.length > 0 && (
+        <section class="mt-8">
+          <h2 class="flex items-center gap-2 text-xs font-medium text-neutral-400">
+            <Icon name="lucide:users" size={14} />
+            Shared with you
+            <span class="text-neutral-600">({shared.length})</span>
+          </h2>
+          <ul class="mt-3 space-y-2">
+            {shared.map((document) => (
+              <li class="rounded-xl border border-neutral-800 bg-neutral-950/60 p-3">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <a
+                      href={editorUrl(document.id)}
+                      class="text-sm font-medium text-neutral-50 hover:text-white"
+                    >
+                      {document.title}
+                    </a>
+                    <p class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-neutral-500">
+                      <span>{describeAccess(document.role)}</span>
+                      <span>·</span>
+                      <span class="inline-flex items-center gap-1">
+                        <Icon name="lucide:clock" size={11} />
+                        {formatTimestamp(document.updatedAt)}
+                      </span>
+                      <span>·</span>
+                      <span>{describeSize(document.content)}</span>
+                    </p>
+                  </div>
+                  <div class="flex shrink-0 items-center gap-1">
+                    <a href={editorUrl(document.id)} class="hb">
+                      <Icon name="lucide:pencil-line" />
+                      Open
+                    </a>
+                    <a
+                      href={`/documents/${encodeURIComponent(document.id)}/history`}
+                      class="hb"
+                      title="Version history"
+                    >
+                      <Icon name="lucide:history" />
+                    </a>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {documents.length >= MAX_LISTED_DOCUMENTS && (
+        <p class="mt-6 text-[11px] text-amber-400/80">
+          Showing the {MAX_LISTED_DOCUMENTS} most recently edited documents.
+        </p>
+      )}
+    </>
+  )}
+
+  <CollaborateDialog />
+</AccountLayout>
+
+<script>
+  import { initConfirmForms } from '@/lib/app/confirmDialog';
+  import { countLocalDrafts, importLocalDrafts } from '@/lib/documents/importDrafts';
+
+  initConfirmForms();
+
+  const button = document.getElementById('import-local-drafts');
+  const label = document.getElementById('import-local-drafts-label');
+
+  if (button instanceof HTMLButtonElement && label) {
+    const drafts = countLocalDrafts(localStorage);
+    if (drafts > 0) {
+      label.textContent =
+        drafts === 1 ? 'Import 1 browser draft' : `Import ${drafts} browser drafts`;
+      button.hidden = false;
+    }
+
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      label.textContent = 'Importing…';
+
+      void importLocalDrafts(localStorage).then((summary) => {
+        if (!summary) {
+          window.location.assign('/dashboard?error=import_failed');
+          return;
+        }
+        window.location.assign(
+          summary.created > 0 ? `/dashboard?imported=${summary.created}` : '/dashboard',
+        );
+      });
+    });
+  }
+</script>

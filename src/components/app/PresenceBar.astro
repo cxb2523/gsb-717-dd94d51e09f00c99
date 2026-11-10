@@ -1,0 +1,16 @@
+---
+interface Props {
+  id?: string;
+}
+
+const { id = 'presence-bar' } = Astro.props as Props;
+---
+
+<div
+  id={id}
+  data-presence-root
+  class="flex items-center -space-x-2 shrink-0"
+  role="status"
+  aria-live="polite"
+  hidden
+></div>

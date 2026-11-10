@@ -1,0 +1,15 @@
+---
+import { Icon as IconifyIcon } from 'astro-icon/components';
+
+import type { IconName } from '../../lib/ui/iconNames';
+
+interface Props {
+  name: IconName;
+  size?: number;
+  class?: string;
+}
+
+const { name, size = 16, class: className } = Astro.props;
+---
+
+<IconifyIcon name={name} size={size} class={className} />

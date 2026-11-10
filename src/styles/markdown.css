@@ -1,0 +1,374 @@
+.prose :where(code):not(pre code) {
+  background: #1a1a1a;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+.prose :where(code):not(pre code)::before,
+.prose :where(code):not(pre code)::after {
+  content: none;
+}
+
+.prose pre {
+  background: #0a0a0a !important;
+  border: 1px solid #1f1f1f;
+}
+
+.prose a {
+  color: #3b9eff;
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.prose blockquote {
+  border-left-color: #333;
+  color: #a3a3a3;
+  font-style: normal;
+}
+
+.prose hr {
+  border-color: #1f1f1f;
+}
+
+.prose ::marker {
+  color: #666;
+}
+
+.prose th,
+.prose td {
+  padding: 0.55em 0.8em;
+}
+
+.prose thead th {
+  color: #ededed;
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 1rem;
+}
+
+.mermaid-box {
+  position: relative;
+  margin: 1.25em 0;
+  padding: 12px;
+  border: 1px solid #1f1f1f;
+  border-radius: 10px;
+  background: #050505;
+  text-align: center;
+}
+
+.mermaid-box svg {
+  display: block;
+  height: auto;
+}
+
+.diagram-viewport {
+  overflow: hidden;
+  max-height: min(70vh, 520px);
+  cursor: grab;
+  touch-action: none;
+}
+
+.diagram-viewport.is-panning {
+  cursor: grabbing;
+}
+
+.diagram-stage {
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.diagram-bar {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  background: #0b0b0be6;
+}
+
+.diagram-bar button {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 11px;
+  color: #d4d4d4;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.diagram-bar button:hover,
+.diagram-bar button:focus-visible {
+  background: #262626;
+  color: #fff;
+}
+
+.diagram-level {
+  min-width: 34px;
+  text-align: center;
+  font-size: 10px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+}
+
+.diagram-bar button svg {
+  display: block;
+  pointer-events: none;
+}
+
+.diagram-bar [data-diagram='fullscreen'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 0;
+}
+
+.mermaid-box:fullscreen {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.mermaid-box:fullscreen .diagram-viewport {
+  flex: 1;
+  width: 100%;
+  height: auto;
+  max-height: none;
+}
+
+.mermaid-box:fullscreen .diagram-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  background: #0b0b0bf2;
+}
+
+/* CSS overlay fallback for engines without the Fullscreen API. */
+body:has(.mermaid-box.is-fullscreen-fallback) {
+  overflow: hidden;
+}
+
+.mermaid-box.is-fullscreen-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #050505;
+}
+
+.mermaid-box.is-fullscreen-fallback .diagram-viewport {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+.mermaid-box.is-fullscreen-fallback .diagram-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  background: #0b0b0bf2;
+}
+
+.mermaid-err {
+  text-align: left;
+  color: #f87171;
+  font-size: 12px;
+}
+
+.mermaid-err pre {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  color: #a3a3a3;
+  font-size: 11px;
+}
+
+.prose img {
+  display: inline-block;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.prose p > img:only-child,
+.prose p > a:only-child > img,
+.prose p > picture:only-child {
+  display: block;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+.prose picture > img {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.table-scroll {
+  margin: 1.25em 0;
+  overflow-x: auto;
+}
+
+.table-scroll table {
+  margin: 0;
+}
+
+.code-block {
+  position: relative;
+  margin: 1.25em 0;
+}
+
+.code-block pre {
+  margin: 0 !important;
+  border-radius: 0 0 10px 10px !important;
+}
+
+.code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #737373;
+  background: #111;
+  border: 1px solid #1f1f1f;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+}
+
+.code-lang:empty {
+  visibility: hidden;
+}
+
+.code-copy {
+  padding: 2px 8px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #d4d4d4;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.code-copy:hover,
+.code-copy:focus-visible {
+  background: #262626;
+  color: #fff;
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+}
+
+.heading-anchor {
+  position: absolute;
+  left: -0.9em;
+  top: 0;
+  width: 0.9em;
+  text-align: center;
+  color: #525252;
+  text-decoration: none !important;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.heading-anchor::before {
+  content: '#';
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.heading-anchor:hover {
+  color: #9ca3af;
+}
+
+.prose img.zoomable {
+  cursor: zoom-in;
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #000000e6;
+  cursor: zoom-out;
+}
+
+.image-lightbox[hidden] {
+  display: none;
+}
+
+.image-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+}
+
+.prose li:has(> input[type='checkbox']) {
+  list-style: none;
+}
+
+.prose input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.5rem 0 0;
+  vertical-align: -2px;
+  flex-shrink: 0;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.prose input[type='checkbox']:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.kd-math-block {
+  display: block;
+  margin: 1.1em 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.kd-math-inline {
+  display: inline-block;
+}
+
+.kd-math-error {
+  color: #f87171;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}

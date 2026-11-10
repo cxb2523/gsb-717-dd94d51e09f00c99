@@ -1,0 +1,84 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { toAccountSummary } from '@/lib/auth/account';
+import Layout from '@/layouts/Layout.astro';
+import AccountMenu from '@/components/auth/AccountMenu.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  current?: 'editor' | 'dashboard' | 'settings';
+}
+
+const { title, description, current } = Astro.props;
+
+const account = toAccountSummary(Astro.locals.user, Astro.locals.profile);
+if (!account) return Astro.redirect('/login?next=/dashboard');
+
+const nav = [
+  { id: 'editor', label: 'Editor', href: '/', icon: 'lucide:terminal' },
+  { id: 'dashboard', label: 'Documents', href: '/dashboard', icon: 'lucide:file-text' },
+  { id: 'settings', label: 'Profile', href: '/settings', icon: 'lucide:settings' },
+] as const;
+---
+
+<Layout
+  title={`${title} · Mdverse`}
+  bodyClass="min-h-screen bg-black text-neutral-200 font-sans"
+  robots="noindex"
+>
+  <div class="min-h-screen flex flex-col">
+    <header class="flex items-center justify-between gap-3 h-12 px-3 border-b border-neutral-800 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <a href="/dashboard" class="flex items-center shrink-0" aria-label="Mdverse home">
+          <div class="flex items-center shrink-0">
+            <img
+              src="/svg/logo-calligraphy.svg"
+              alt="Mdverse logo"
+              class="h-7 w-auto"
+              width="136"
+              height="33"
+            />
+          </div>
+        </a>
+      </div>
+
+      <div class="relative flex items-center justify-end h-full w-48 sm:w-70">
+        <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <img
+            src="/images/bg-header.avif"
+            alt=""
+            class="w-full h-full object-cover opacity-80 mask-b-from-80% mask-b-to-99%"
+          />
+        </div>
+        <AccountMenu />
+      </div>
+    </header>
+
+    <div class="flex flex-1 min-h-0 flex-col">
+      <main class="flex-1 w-full min-w-0 max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-10 mb-20">
+          <nav class="flex shrink-0 flex-wrap gap-1 sm:w-52 sm:flex-col" aria-label="Account">
+            {nav.map((item) => (
+              <a
+                href={item.href}
+                class:list={['sb-item', current === item.id && 'on']}
+                aria-current={current === item.id ? 'page' : undefined}
+              >
+                <Icon name={item.icon} />
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <div class="min-w-0 flex-1">
+            <h1 class="text-xl sm:text-2xl font-semibold text-neutral-50">{title}</h1>
+            {description && <p class="mt-2 text-sm text-neutral-400">{description}</p>}
+            <div class="mt-8">
+              <slot />
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,131 @@
+---
+import Icon from '../ui/Icon.astro';
+import DocumentTabs from './DocumentTabs.astro';
+import GitHubStars from './GitHubStars.astro';
+import CollaborateDialog from './CollaborateDialog.astro';
+import PresenceBar from './PresenceBar.astro';
+import ExportMenu from './ExportMenu.astro';
+import ViewMenu from './ViewMenu.astro';
+import ClearMenu from './ClearMenu.astro';
+import AccountMenu from '../auth/AccountMenu.astro';
+import RequestAccessPopup from './RequestAccessPopup.astro';
+---
+
+<header class="relative flex items-center justify-between h-12 px-2 sm:px-3 border-b border-neutral-800 shrink-0 gap-1.5 sm:gap-3 select-none">
+  <div class="absolute max-sm:inset-0 sm:right-0 sm:left-auto sm:w-48 md:w-80 h-full -z-10 overflow-hidden pointer-events-none">
+    <img
+      src="/images/bg-header.avif"
+      alt=""
+      class="w-full h-full object-cover opacity-70 sm:opacity-90 mask-b-from-80% mask-b-to-99%"
+    />
+  </div>
+
+  <GitHubStars />
+
+  <div class="flex items-center gap-0 sm:gap-1.5 lg:gap-3 min-w-0 flex-1 overflow-hidden z-10">
+    <a href="/" class="max-sm:hidden flex items-center shrink-0" aria-label="Mdverse Home">
+      <img
+        src="/svg/logo-calligraphy.svg"
+        alt="Mdverse logo"
+        class="h-7 w-auto"
+        width="136"
+        height="33"
+      />
+    </a>
+    <span class="sep max-sm:hidden"></span>
+    <DocumentTabs />
+
+    <div class="seg m-tabs shrink-0" role="group" aria-label="Visible panel">
+      <button type="button" class="hb" data-command="panel-code" title="Code">
+        <Icon name="lucide:code-xml" />
+        <span class="hidden sm:inline">Code</span>
+      </button>
+      <button type="button" class="hb" data-command="panel-preview" title="Preview">
+        <Icon name="lucide:eye" />
+        <span class="hidden sm:inline">Preview</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="relative flex items-center flex-nowrap h-full gap-0 sm:gap-1.5 shrink-0 z-10 pl-0 sm:pl-6">
+    <div class="flex items-center gap-1 max-md:hidden">
+      <button
+        type="button"
+        class="inline-flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-white px-2 text-xs font-semibold text-black transition-colors hover:bg-neutral-200"
+        data-command="popout"
+        title="Open the preview in another tab"
+        aria-label="Open preview in another tab"
+      >
+        <Icon name="lucide:external-link" class="w-3.5 h-3.5 shrink-0" />
+        <span class="hidden lg:inline">Preview</span>
+      </button>
+      <ExportMenu />
+      <ViewMenu />
+      <ClearMenu />
+      <PresenceBar />
+    </div>
+    <CollaborateDialog />
+
+    <div class="md:hidden">
+      <button
+        type="button"
+        class="hb"
+        data-menu="overflow"
+        aria-haspopup="true"
+        aria-expanded="false"
+        title="More actions"
+        aria-label="More actions"
+      >
+        <Icon name="lucide:ellipsis-vertical" />
+      </button>
+      <div class="pop" data-pop="overflow" hidden>
+        <button type="button" class="mi" data-command="popout">
+          <Icon name="lucide:external-link" />
+          Open preview in a tab
+        </button>
+        <div class="pop-sep"></div>
+        <ExportMenu suffix="-m" />
+        <ViewMenu suffix="-m" />
+        <ClearMenu suffix="-m" />
+        <div data-collab-section hidden>
+          <div class="pop-sep"></div>
+          <p class="pop-label">Collaborators</p>
+          <div class="px-2.5 py-1" data-presence-wrap>
+            <PresenceBar id="presence-bar-m" />
+          </div>
+          <button
+            type="button"
+            class="mi"
+            data-collab-open-btn
+            title="Invite people to this document"
+            aria-haspopup="dialog"
+            hidden
+          >
+            <Icon name="lucide:user-plus" />
+            Collaborate
+          </button>
+        </div>
+        <div class="pop-sep"></div>
+        <GitHubStars variant="menu" />
+      </div>
+    </div>
+
+    <button
+      id="role-badge"
+      type="button"
+      class="hb role-badge"
+      hidden
+      title="View only - click to request edit access"
+      aria-haspopup="dialog"
+      aria-expanded="false"
+      aria-controls="request-access-pop"
+    >
+      <Icon name="lucide:lock" />
+      <span class="hidden lg:inline">View only</span>
+    </button>
+    <RequestAccessPopup />
+
+    <span class="hidden sm:inline sep"></span>
+    <AccountMenu />
+  </div>
+</header>

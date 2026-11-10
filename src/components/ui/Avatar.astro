@@ -1,0 +1,46 @@
+---
+import { avatarAura } from '../../lib/auth/avatarAura';
+
+interface Props {
+  name?: string | null;
+  seed?: string | null;
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+}
+
+const { name, seed, size = 'md', class: className = '' } = Astro.props;
+
+const aura = avatarAura(seed, name, size);
+const { baseLayer, softVeil, veilA, veilB } = aura;
+const isLarge = size === 'lg';
+
+const SIZES = {
+  sm: 'h-6 w-6',
+  md: 'h-8 w-8',
+  lg: 'h-14 w-14',
+} as const;
+
+const label = (name ?? '').trim();
+---
+
+<div
+  role="img"
+  aria-label={label || undefined}
+  aria-hidden={label ? undefined : 'true'}
+  title={label || undefined}
+  class:list={[
+    'relative rounded-full overflow-hidden ring-1 ring-white/10 shrink-0 select-none',
+    SIZES[size],
+    className,
+  ]}
+>
+  <div aria-hidden="true" class:list={['absolute inset-0 pointer-events-none']} style={baseLayer} />
+  {isLarge ? (
+    <>
+      <div aria-hidden="true" class:list={['absolute inset-0 pointer-events-none']} style={veilA} />
+      <div aria-hidden="true" class:list={['absolute inset-0 pointer-events-none']} style={veilB} />
+    </>
+  ) : (
+    <div aria-hidden="true" class:list={['absolute inset-0 pointer-events-none']} style={softVeil} />
+  )}
+</div>

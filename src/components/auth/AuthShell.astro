@@ -1,0 +1,135 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import Layout from '@/layouts/Layout.astro';
+import type { AuthNotice } from '@/lib/auth/messages';
+
+interface Props {
+  title: string;
+  heading: string;
+  subtitle?: string;
+  notice?: AuthNotice | null;
+}
+
+const { title, heading, subtitle, notice = null } = Astro.props;
+
+const NOTICE_TONES = {
+  error: 'border-red-500/40 bg-red-500/10 text-red-200',
+  success: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
+  info: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
+} as const;
+---
+
+<Layout title={title} bodyClass="min-h-screen bg-black text-neutral-200 font-sans" robots="noindex">
+  <main class="min-h-screen flex flex-col justify-center px-4 sm:px-8 py-10 relative">
+    <div class="absolute top-6 left-4 sm:left-8">
+      <button
+        type="button"
+        class="hb flex items-center gap-1.5 px-2 py-1 text-xs text-neutral-400 hover:text-neutral-100 transition-colors"
+        data-auth-back
+        title="Go back"
+        aria-label="Go back to the previous page"
+      >
+        <Icon name="lucide:arrow-left" size={14} />
+        <span>Back</span>
+      </button>
+    </div>
+
+    <div class="w-full max-w-sm mx-auto">
+      <div class="flex justify-center">
+        <img
+          src="/svg/logo-calligraphy.svg"
+          alt="Mdverse"
+          width="220"
+          height="54"
+          class="h-auto w-[220px]"
+        />
+      </div>
+
+      <h1 class="mt-8 text-xl font-semibold text-neutral-50">{heading}</h1>
+      {subtitle && <p class="mt-2 text-sm text-neutral-400">{subtitle}</p>}
+
+      {notice && (
+        <p
+          class:list={[
+            'mt-6 rounded-lg border px-3 py-2 text-xs leading-relaxed',
+            NOTICE_TONES[notice.tone],
+          ]}
+          role={notice.tone === 'error' ? 'alert' : 'status'}
+        >
+          {notice.message}
+        </p>
+      )}
+
+      <div class="mt-6">
+        <slot />
+      </div>
+
+      <div class="mt-6">
+        <slot name="footer" />
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const backBtn = document.querySelector('[data-auth-back]');
+    if (backBtn instanceof HTMLButtonElement) {
+      backBtn.addEventListener('click', () => {
+        if (document.referrer && document.referrer.includes(window.location.host)) {
+          window.history.back();
+        } else {
+          window.location.href = '/';
+        }
+      });
+    }
+
+    for (const node of document.querySelectorAll('[data-password-toggle]')) {
+      if (!(node instanceof HTMLButtonElement)) continue;
+      const field = document.getElementById(node.dataset.passwordToggle ?? '');
+      if (!(field instanceof HTMLInputElement)) continue;
+
+      node.addEventListener('click', () => {
+        const reveal = field.type === 'password';
+        field.type = reveal ? 'text' : 'password';
+        node.dataset.visible = String(reveal);
+        node.setAttribute('aria-pressed', String(reveal));
+        field.focus();
+      });
+    }
+
+    for (const node of document.querySelectorAll('[data-password-confirm]')) {
+      if (!(node instanceof HTMLInputElement)) continue;
+      const source = document.getElementById(node.dataset.passwordConfirm ?? '');
+      if (!(source instanceof HTMLInputElement)) continue;
+      const matchHint = document.querySelector(`[data-password-match-for="${node.id}"]`);
+      const mismatchHint = document.querySelector(`[data-password-mismatch-for="${node.id}"]`);
+
+      const sync = () => {
+        if (node.value.length === 0) {
+          node.setCustomValidity('');
+          if (matchHint instanceof HTMLElement) matchHint.hidden = true;
+          if (mismatchHint instanceof HTMLElement) mismatchHint.hidden = true;
+          return;
+        }
+        const matches = node.value === source.value;
+        node.setCustomValidity(matches ? '' : 'The two passwords do not match.');
+        if (matchHint instanceof HTMLElement) matchHint.hidden = !matches;
+        if (mismatchHint instanceof HTMLElement) mismatchHint.hidden = matches;
+      };
+
+      source.addEventListener('input', sync);
+      node.addEventListener('input', sync);
+    }
+
+    for (const form of document.querySelectorAll('form[method="POST"]')) {
+      if (!(form instanceof HTMLFormElement)) continue;
+      const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (!submit || submit.disabled) continue;
+      const syncSubmit = () => {
+        submit.disabled = !form.checkValidity();
+      };
+      form.addEventListener('input', syncSubmit);
+      form.addEventListener('change', syncSubmit);
+      syncSubmit();
+    }
+  </script>
+</Layout>

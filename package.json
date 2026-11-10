@@ -1,0 +1,85 @@
+{
+  "name": "mdverse",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "sync": "astro sync",
+    "check": "astro check",
+    "email": "email dev --dir emails --port 3030",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "budget": "node scripts/check-bundle-budget.mjs",
+    "test:db": "vitest run --config vitest.integration.config.ts",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:advisors": "supabase db advisors",
+    "db:rls": "node tests/db/rls.mjs",
+    "db:types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_REF\" > src/lib/supabase/database.types.ts"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.3.3",
+    "@iconify-json/lucide": "^1.2.140",
+    "@iconify-json/simple-icons": "^1.2.99",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.2",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.6",
+    "astro-icon": "^1.2.0",
+    "docx": "^9.9.0",
+    "dompurify": "^3.4.16",
+    "highlight.js": "^11.12.0",
+    "katex": "^0.19.0",
+    "marked": "^18.1.0",
+    "marked-footnote": "^1.4.0",
+    "mermaid": "^12.1.0",
+    "pdfmake": "^0.2.23",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-email": "^6.11.0",
+    "resend": "^6.32.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "allowScripts": {
+    "esbuild": true
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@eslint/js": "^10.0.1",
+    "@react-email/ui": "6.11.0",
+    "@types/node": "^24.19.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^10.12.0",
+    "eslint-plugin-astro": "^3.2.1",
+    "jsdom": "^30.1.2",
+    "jszip": "^3.10.2",
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.1.0",
+    "supabase": "2.120.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.147.0"
+  },
+  "pnpm": {
+    "allowBuilds": {
+      "esbuild": true,
+      "sharp": true,
+      "workerd": true
+    }
+  }
+}
