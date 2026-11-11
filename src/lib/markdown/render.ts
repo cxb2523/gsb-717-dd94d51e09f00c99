@@ -8,6 +8,7 @@ import {
   wrapTables,
 } from './enhance';
 import { attachDiagramControls } from './diagramControls';
+import { hardenRenderedDom } from './harden';
 import { highlightCode } from './highlight';
 import { sanitizeHtml } from './sanitize';
 import { slugifyHeading } from './slug';
@@ -70,10 +71,14 @@ function assignHeadingIds(root: Element): void {
 
 function linkExternalAnchors(root: Element): void {
   root.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
-    if (!(anchor.getAttribute('href') ?? '').startsWith('#')) {
-      anchor.setAttribute('target', '_blank');
-      anchor.setAttribute('rel', 'noopener noreferrer');
-    }
+    const href = anchor.getAttribute('href') ?? '';
+    // In-page anchors, and links the hardening pass downgraded to '#', stay
+    // same-tab.
+    if (href.startsWith('#')) return;
+    // Do not stack attributes on an anchor the author (or a prior pass)
+    // already marked; set each one independently so a partial set is completed.
+    if (!anchor.hasAttribute('target')) anchor.setAttribute('target', '_blank');
+    if (!anchor.hasAttribute('rel')) anchor.setAttribute('rel', 'noopener noreferrer');
   });
 }
 
@@ -119,14 +124,6 @@ async function replaceMermaidBlocks(
   }
 }
 
-function hardenImages(root: Element): void {
-  root.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
-    img.setAttribute('referrerpolicy', 'no-referrer');
-    img.setAttribute('loading', 'lazy');
-    img.setAttribute('decoding', 'async');
-  });
-}
-
 export async function renderMarkdown(
   target: RenderTarget,
   markdown: string,
@@ -151,8 +148,8 @@ export async function renderMarkdown(
     staged.innerHTML = sanitizeHtml(parser.parse(markdown) as string);
 
     assignHeadingIds(staged);
+    hardenRenderedDom(staged);
     linkExternalAnchors(staged);
-    hardenImages(staged);
     highlightCodeBlocks(staged);
     wrapTables(staged);
     await replaceMermaidBlocks(staged, renderDiagram, interactive);

@@ -2,6 +2,7 @@ import { Marked } from 'marked';
 import type { Renderer, RendererObject, Tokens } from 'marked';
 
 import { highlightCode } from './highlight';
+import { hardenRenderedHtml } from './harden';
 import { slugifyHeading } from './slug';
 import { escapeHtml } from './toc';
 import { safeHref } from './url';
@@ -62,7 +63,9 @@ export function renderStaticMarkdown(
     image(token: Tokens.Image) {
       const src = safeHref(token.href);
       const title = token.title ? ` title="${escapeHtml(token.title)}"` : '';
-      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(token.text)}"${title} referrerpolicy="no-referrer" loading="lazy" decoding="async" />`;
+      // `referrerpolicy`, `loading` and `decoding` are added by the unified
+      // hardening pass below, so preview and static output stay identical.
+      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(token.text)}"${title} />`;
     },
   };
 
@@ -77,6 +80,6 @@ export function renderStaticMarkdown(
   const parser = new Marked({ renderer });
   // No async extensions are registered, so `parse` is synchronous; the union in
   // its type comes from the ones we do not use.
-  const html = parser.parse(markdown) as string;
+  const html = hardenRenderedHtml(parser.parse(markdown) as string);
   return { html, headings };
 }
